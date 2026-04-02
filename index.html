@@ -17,186 +17,176 @@
         height: 100vh;
         overflow: hidden;
         background: #000;
+        margin: 0;
+        padding: 0;
       }
 
-      .video-container {
-        position: relative;
+      #threejs-canvas {
         width: 100%;
-        height: 100%;
-        overflow: hidden;
-      }
-
-      video {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transform: translate(-50%, -50%);
-        z-index: 1;
+        height: 100vh;
+        display: block;
       }
 
       #app {
-        position: relative;
-        z-index: 2;
-        width: 100%;
-        height: 100%;
-      }
-
-      /* Hide video controls */
-      video::-webkit-media-controls {
-        display: none !important;
-      }
-
-      video::-moz-media-controls {
-        display: none !important;
-      }
-
-      /* Responsive design */
-      @media (max-width: 768px) {
-        video {
-          width: 100%;
-          height: auto;
-        }
-      }
-
-      @media (max-width: 480px) {
-        video {
-          width: 100%;
-          height: auto;
-        }
-      }
-
-      /* Loader Styles */
-      #loader-container {
-        position: fixed;
+        position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100vh;
-        background: #000;
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      /* 3D Controls UI */
+      #controls {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
         display: flex;
-        flex-direction: column;
-        justify-content: center;
+        gap: 12px;
+        z-index: 100;
+        pointer-events: all;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 15px 20px;
+        border-radius: 60px;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 153, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .control-btn {
+        width: 48px;
+        height: 48px;
+        border: 1.5px solid #0099ff;
+        background: rgba(0, 0, 0, 0.3);
+        color: #0099ff;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 20px;
+        display: flex;
         align-items: center;
-        z-index: 9999;
+        justify-content: center;
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        backdrop-filter: blur(10px);
+        font-weight: bold;
       }
 
-      #loader-bar {
-        width: 60%;
-        max-width: 500px;
-        height: 4px;
-        background: #333;
-        border-radius: 2px;
-        overflow: hidden;
-        box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+      .control-btn:hover {
+        background: rgba(0, 153, 255, 0.15);
+        box-shadow: 0 0 20px rgba(0, 153, 255, 0.4), inset 0 0 20px rgba(0, 153, 255, 0.1);
+        border-color: #00d4ff;
       }
 
-      #loader-progress {
-        height: 100%;
+      .control-btn:active {
+        transform: scale(0.92);
+      }
+
+      .control-btn.active {
+        background: rgba(0, 153, 255, 0.2);
+        border-color: #00d4ff;
+        box-shadow: 0 0 20px rgba(0, 153, 255, 0.6);
+      }
+
+      #zoom-display {
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        color: #00d4ff;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        letter-spacing: 1px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 12px 18px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 153, 255, 0.3);
+        backdrop-filter: blur(20px);
+        z-index: 100;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        font-weight: 600;
+      }
+
+      /* Video progress bar */
+      #video-progress {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        height: 3px;
         background: linear-gradient(90deg, #00d4ff, #0099ff);
         width: 0%;
-        transition: width 0.3s ease;
-        box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+        z-index: 101;
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        transition: width 0.1s linear;
       }
 
-      #loader-text {
-        color: #fff;
-        margin-top: 20px;
-        font-size: 14px;
-        letter-spacing: 2px;
+      /* Info text */
+      #info-text {
+        position: fixed;
+        bottom: 115px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #888;
+        font-size: 12px;
         font-family: Arial, sans-serif;
+        letter-spacing: 0.5px;
+        z-index: 99;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
       }
 
-      #loader-container.hide {
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.6s ease;
+      body:hover #info-text {
+        opacity: 1;
+      }
+
+      @media (max-width: 768px) {
+        #controls {
+          bottom: 25px;
+          gap: 10px;
+          padding: 12px 15px;
+        }
+
+        .control-btn {
+          width: 44px;
+          height: 44px;
+          font-size: 18px;
+        }
+
+        #zoom-display {
+          top: 20px;
+          right: 20px;
+          font-size: 11px;
+          padding: 10px 15px;
+        }
+
+        #info-text {
+          bottom: 95px;
+          font-size: 11px;
+        }
       }
     </style>
   </head>
   <body>
-    <!-- Loader -->
-    <div id="loader-container">
-      <div id="loader-bar">
-        <div id="loader-progress"></div>
-      </div>
-      <div id="loader-text">LOADING</div>
+    <canvas id="threejs-canvas"></canvas>
+    <div id="app"></div>
+
+    <!-- Video Progress Bar -->
+    <div id="video-progress"></div>
+
+    <!-- Info Text -->
+    <div id="info-text">Drag to rotate • Scroll to zoom</div>
+
+    <!-- Control Panel -->
+    <div id="zoom-display">ZOOM: 100%</div>
+    <div id="controls">
+      <button class="control-btn" id="zoom-out" title="Zoom Out (scroll or -)">−</button>
+      <button class="control-btn" id="zoom-in" title="Zoom In (scroll or +)">+</button>
+      <button class="control-btn" id="auto-rotate" title="Auto Rotate">⟳</button>
+      <button class="control-btn" id="fullscreen-btn" title="Fullscreen">⛶</button>
     </div>
 
-    <div class="video-container">
-      <!-- Add your video source here -->
-      <video 
-        id="main-video"
-        muted 
-        loop 
-        playsinline
-      >
-        <source src="home-3d.mp4" type="video/mp4">
-        <!-- <source src="home-3d.webm" type="video/webm"> -->
-        Your browser does not support the video tag.
-      </video>
-    </div>
-    
-    <div id="app"></div>
-    <!-- <script type="module" src="/src/main.js"></script> -->
+    <script type="module" src="/src/main.js"></script>
     
     <script>
-      // Loader functionality
-      let loadProgress = 0;
-      const loaderBar = document.getElementById('loader-progress');
-      const loaderContainer = document.getElementById('loader-container');
-      const mainVideo = document.getElementById('main-video');
-
-      // Simulate loading progress
-      function simulateProgress() {
-        const interval = setInterval(() => {
-          if (loadProgress < 90) {
-            loadProgress += Math.random() * 30;
-            if (loadProgress > 90) loadProgress = 90;
-          }
-          loaderBar.style.width = loadProgress + '%';
-        }, 200);
-
-        return interval;
-      }
-
-      let progressInterval = simulateProgress();
-
-      // Handle video ready to play
-      mainVideo.addEventListener('canplay', function() {
-        loadProgress = 100;
-        loaderBar.style.width = '100%';
-        
-        setTimeout(() => {
-          loaderContainer.classList.add('hide');
-          mainVideo.play();
-          mainVideo.autoplay = true;
-        }, 300);
-
-        clearInterval(progressInterval);
-      });
-
-      // Handle when page is fully loaded
-      window.addEventListener('load', function() {
-        clearInterval(progressInterval);
-        if (loadProgress < 100) {
-          loadProgress = 100;
-          loaderBar.style.width = '100%';
-        }
-      });
-
-      // Fallback: hide loader after 15 seconds even if video doesn't load
-      setTimeout(() => {
-        if (loaderContainer.classList.contains('hide') === false) {
-          loadProgress = 100;
-          loaderBar.style.width = '100%';
-          loaderContainer.classList.add('hide');
-          mainVideo.play();
-        }
-      }, 15000);
-
       // Disable right-click context menu
       document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
@@ -207,7 +197,7 @@
       document.addEventListener('keydown', function(e) {
         // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
         if (
-          e.key === 'F12' || 
+          e.key === 'F12' ||
           (e.ctrlKey && e.shiftKey && e.key === 'I') ||
           (e.ctrlKey && e.shiftKey && e.key === 'J') ||
           (e.ctrlKey && e.shiftKey && e.key === 'C') ||
