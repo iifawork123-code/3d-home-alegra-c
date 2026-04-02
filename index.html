@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- <link rel="icon" type="image/svg+xml" href="/favicon.svg" /> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>3d-home</title>
     <style>
@@ -78,13 +78,37 @@
         loop 
         playsinline
       >
-        <source src="your-video.mp4" type="video/mp4">
-        <source src="your-video.webm" type="video/webm">
+        <source src="home-3d.mp4" type="video/mp4">
+        <!-- <source src="home-3d.webm" type="video/webm"> -->
         Your browser does not support the video tag.
       </video>
     </div>
     
     <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+    <!-- <script type="module" src="/src/main.js"></script> -->
+    
+    <script>
+      // Disable right-click context menu
+      document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+      });
+
+      // Disable developer tools keyboard shortcuts
+      document.addEventListener('keydown', function(e) {
+        // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+        if (
+          e.key === 'F12' || 
+          (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+          (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+          (e.ctrlKey && e.shiftKey && e.key === 'C') ||
+          (e.ctrlKey && e.shiftKey && e.key === 'U') || // View page source
+          (e.ctrlKey && e.key === 'U') // Firefox view page source
+        ) {
+          e.preventDefault();
+          return false;
+        }
+      });
+    </script>
   </body>
 </html>
