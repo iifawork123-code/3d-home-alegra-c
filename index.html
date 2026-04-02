@@ -67,13 +67,68 @@
           height: auto;
         }
       }
+
+      /* Loader Styles */
+      #loader-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      #loader-bar {
+        width: 60%;
+        max-width: 500px;
+        height: 4px;
+        background: #333;
+        border-radius: 2px;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+      }
+
+      #loader-progress {
+        height: 100%;
+        background: linear-gradient(90deg, #00d4ff, #0099ff);
+        width: 0%;
+        transition: width 0.3s ease;
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+      }
+
+      #loader-text {
+        color: #fff;
+        margin-top: 20px;
+        font-size: 14px;
+        letter-spacing: 2px;
+        font-family: Arial, sans-serif;
+      }
+
+      #loader-container.hide {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.6s ease;
+      }
     </style>
   </head>
   <body>
+    <!-- Loader -->
+    <div id="loader-container">
+      <div id="loader-bar">
+        <div id="loader-progress"></div>
+      </div>
+      <div id="loader-text">LOADING</div>
+    </div>
+
     <div class="video-container">
       <!-- Add your video source here -->
       <video 
-        autoplay 
+        id="main-video"
         muted 
         loop 
         playsinline
@@ -88,6 +143,60 @@
     <!-- <script type="module" src="/src/main.js"></script> -->
     
     <script>
+      // Loader functionality
+      let loadProgress = 0;
+      const loaderBar = document.getElementById('loader-progress');
+      const loaderContainer = document.getElementById('loader-container');
+      const mainVideo = document.getElementById('main-video');
+
+      // Simulate loading progress
+      function simulateProgress() {
+        const interval = setInterval(() => {
+          if (loadProgress < 90) {
+            loadProgress += Math.random() * 30;
+            if (loadProgress > 90) loadProgress = 90;
+          }
+          loaderBar.style.width = loadProgress + '%';
+        }, 200);
+
+        return interval;
+      }
+
+      let progressInterval = simulateProgress();
+
+      // Handle video ready to play
+      mainVideo.addEventListener('canplay', function() {
+        loadProgress = 100;
+        loaderBar.style.width = '100%';
+        
+        setTimeout(() => {
+          loaderContainer.classList.add('hide');
+          mainVideo.play();
+          mainVideo.autoplay = true;
+        }, 300);
+
+        clearInterval(progressInterval);
+      });
+
+      // Handle when page is fully loaded
+      window.addEventListener('load', function() {
+        clearInterval(progressInterval);
+        if (loadProgress < 100) {
+          loadProgress = 100;
+          loaderBar.style.width = '100%';
+        }
+      });
+
+      // Fallback: hide loader after 15 seconds even if video doesn't load
+      setTimeout(() => {
+        if (loaderContainer.classList.contains('hide') === false) {
+          loadProgress = 100;
+          loaderBar.style.width = '100%';
+          loaderContainer.classList.add('hide');
+          mainVideo.play();
+        }
+      }, 15000);
+
       // Disable right-click context menu
       document.addEventListener('contextmenu', function(e) {
         e.preventDefault();
