@@ -46,6 +46,12 @@ let mouseY = 0;
 let lastMouseX = 0;
 let lastMouseY = 0;
 
+// Zoom controls
+let currentFov = 75;
+let minFov = 30; // Maximum zoom in
+let maxFov = 120; // Maximum zoom out
+let zoomSpeed = 2;
+
 // Sphere for HDRI display
 let sphere = null;
 let currentHdri = 'bathroom_2k.hdr';
@@ -83,6 +89,31 @@ function hideLoader() {
 function updateLoaderProgress(percent) {
   loaderProgress.style.width = percent + '%';
   loaderText.textContent = Math.round(percent) + '%';
+}
+
+// Zoom functions
+function zoomIn() {
+  currentFov = Math.max(minFov, currentFov - zoomSpeed);
+  updateCameraFov();
+}
+
+function zoomOut() {
+  currentFov = Math.min(maxFov, currentFov + zoomSpeed);
+  updateCameraFov();
+}
+
+function resetZoom() {
+  currentFov = 75; // Reset to default FOV
+  updateCameraFov();
+}
+
+function updateCameraFov() {
+  camera.fov = currentFov;
+  camera.updateProjectionMatrix();
+  
+  // Update zoom display
+  const zoomPercent = Math.round((75 / currentFov) * 100);
+  document.getElementById('zoom-display').textContent = `ZOOM: ${zoomPercent}%`;
 }
 
 // Load HDRI function
@@ -229,10 +260,22 @@ document.addEventListener('touchend', () => {
   isMouseDown = false;
 });
 
-// Wheel zoom support (smooth rotation speed)
+// Zoom button event listeners
+document.getElementById('zoom-in-btn').addEventListener('click', zoomIn);
+document.getElementById('zoom-out-btn').addEventListener('click', zoomOut);
+document.getElementById('reset-zoom-btn').addEventListener('click', resetZoom);
+
+// Wheel zoom support
 document.addEventListener('wheel', (e) => {
   if (e.target.closest('#hdri-selector')) return;
   e.preventDefault();
+  
+  // Zoom based on wheel direction
+  if (e.deltaY < 0) {
+    zoomIn(); // Scroll up = zoom in
+  } else {
+    zoomOut(); // Scroll down = zoom out
+  }
 }, { passive: false });
 
 // Animation loop
@@ -250,5 +293,6 @@ window.addEventListener('resize', () => {
 
 // Initialize
 initializeHdriGrid();
+resetZoom(); // Initialize zoom display
 loadHdri(currentHdri);
 animate();
