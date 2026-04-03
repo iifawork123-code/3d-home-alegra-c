@@ -3,12 +3,12 @@ import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 
 // HDRI files list
 const hdriFiles = [
-  'bathroom_2k.hdr',
   'cayley_interior_2k.hdr',
   'comfy_cafe_2k.hdr',
   'decor_shop_2k.hdr',
   'glasshouse_interior_2k.hdr',
-  'kiara_interior_2k.hdr'
+  'kiara_interior_2k.hdr',
+  'living_room_2k.hdr'
 ];
 
 // Scene setup
@@ -54,7 +54,7 @@ let zoomSpeed = 1; // Slower zoom speed
 
 // Sphere for HDRI display
 let sphere = null;
-let currentHdri = 'bathroom_2k.hdr';
+let currentHdri = hdriFiles[5]; // default to first available HDRI
 
 // Initialize HDRI grid
 function initializeHdriGrid() {
