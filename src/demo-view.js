@@ -48,9 +48,9 @@ let lastMouseY = 0;
 
 // Zoom controls
 let currentFov = 75;
-let minFov = 30; // Maximum zoom in
-let maxFov = 120; // Maximum zoom out
-let zoomSpeed = 2;
+let minFov = 40; // Maximum zoom in (less extreme)
+let maxFov = 100; // Maximum zoom out (less extreme)
+let zoomSpeed = 1; // Slower zoom speed
 
 // Sphere for HDRI display
 let sphere = null;
@@ -219,9 +219,8 @@ document.addEventListener('mousemove', (e) => {
     const deltaX = e.clientX - lastMouseX;
     const deltaY = e.clientY - lastMouseY;
 
-    // Directly apply rotation to sphere
-    sphere.rotation.y += deltaX * 0.01;
-    sphere.rotation.x += deltaY * 0.01;
+    // Only apply Y-axis rotation (left/right rotation) - lock X-axis
+    sphere.rotation.y += deltaX * 0.005;
 
     lastMouseX = e.clientX;
     lastMouseY = e.clientY;
@@ -247,9 +246,8 @@ document.addEventListener('touchmove', (e) => {
     const deltaX = e.touches[0].clientX - lastMouseX;
     const deltaY = e.touches[0].clientY - lastMouseY;
 
-    // Directly apply rotation to sphere
-    sphere.rotation.y += deltaX * 0.01;
-    sphere.rotation.x += deltaY * 0.01;
+    // Only apply Y-axis rotation (left/right rotation) - lock X-axis
+    sphere.rotation.y += deltaX * 0.005;
 
     lastMouseX = e.touches[0].clientX;
     lastMouseY = e.touches[0].clientY;
