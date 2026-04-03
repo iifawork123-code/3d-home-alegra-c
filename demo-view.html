@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HDRI Demo View</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+        background: #000;
+        margin: 0;
+        padding: 0;
+        font-family: 'Courier New', monospace;
+      }
+
+      #threejs-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      /* Loader Overlay */
+      #loader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      #loader-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .loader-container {
+        text-align: center;
+      }
+
+      .loader-bar {
+        width: 300px;
+        height: 8px;
+        background: rgba(0, 153, 255, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(0, 153, 255, 0.5);
+        margin: 30px 0;
+      }
+
+      .loader-progress {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #00d4ff, #0099ff);
+        border-radius: 10px;
+        transition: width 0.2s linear;
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
+      }
+
+      .loader-text {
+        color: #00d4ff;
+        font-size: 14px;
+        letter-spacing: 2px;
+        margin-top: 15px;
+        font-weight: 600;
+      }
+
+      /* HDRI Selector Section */
+      #hdri-selector {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        pointer-events: all;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 20px 30px;
+        border-radius: 12px;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 153, 255, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        max-width: 90%;
+      }
+
+      .selector-label {
+        color: #888;
+        font-size: 12px;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        display: block;
+        text-transform: uppercase;
+      }
+
+      .hdri-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        max-width: 600px;
+        pointer-events: all;
+      }
+
+      .hdri-option {
+        padding: 12px 16px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(0, 153, 255, 0.3);
+        color: #00d4ff;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+        font-weight: 500;
+        pointer-events: all;
+      }
+
+      .hdri-option:hover {
+        background: rgba(0, 153, 255, 0.15);
+        border-color: #00d4ff;
+        box-shadow: 0 0 20px rgba(0, 153, 255, 0.4);
+      }
+
+      .hdri-option.active {
+        background: rgba(0, 153, 255, 0.25);
+        border-color: #00d4ff;
+        box-shadow: 0 0 20px rgba(0, 153, 255, 0.6), inset 0 0 10px rgba(0, 153, 255, 0.2);
+      }
+
+      /* Back to Home Button */
+      #back-btn {
+        position: fixed;
+        top: 30px;
+        left: 30px;
+        padding: 12px 20px;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(0, 153, 255, 0.3);
+        color: #00d4ff;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        z-index: 100;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      #back-btn:hover {
+        background: rgba(0, 153, 255, 0.15);
+        border-color: #00d4ff;
+        box-shadow: 0 0 20px rgba(0, 153, 255, 0.4);
+      }
+
+      /* Info Display */
+      #info-display {
+        position: fixed;
+        top: 30px;
+        right: 30px;
+        color: #888;
+        font-size: 12px;
+        letter-spacing: 1px;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 12px 18px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 153, 255, 0.3);
+        backdrop-filter: blur(20px);
+        z-index: 100;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        max-width: 200px;
+        text-align: right;
+      }
+
+      @media (max-width: 768px) {
+        #hdri-selector {
+          bottom: 20px;
+          left: 20px;
+          right: 20px;
+          transform: none;
+          max-width: none;
+        }
+
+        .hdri-grid {
+          grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        }
+
+        #back-btn {
+          top: 20px;
+          left: 20px;
+          padding: 10px 16px;
+          font-size: 11px;
+        }
+
+        #info-display {
+          top: 20px;
+          right: 20px;
+          font-size: 11px;
+          padding: 10px 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="threejs-canvas"></canvas>
+
+    <!-- Back Button -->
+    <a id="back-btn" href="/">← BACK TO HOME</a>
+
+    <!-- Info Display -->
+    <div id="info-display">
+      <div id="current-hdri">Loading...</div>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader-overlay">
+      <div class="loader-container">
+        <div style="color: #00d4ff; font-size: 18px; letter-spacing: 2px; margin-bottom: 20px;">
+          LOADING HDRI
+        </div>
+        <div class="loader-bar">
+          <div class="loader-progress" id="loader-progress"></div>
+        </div>
+        <div class="loader-text" id="loader-text">0%</div>
+      </div>
+    </div>
+
+    <!-- HDRI Selector -->
+    <div id="hdri-selector">
+      <label class="selector-label">📁 Select HDRI</label>
+      <div class="hdri-grid" id="hdri-grid"></div>
+    </div>
+
+    <script type="module" src="/src/demo-view.js"></script>
+  </body>
+</html>
