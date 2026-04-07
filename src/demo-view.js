@@ -1,14 +1,12 @@
 import * as THREE from 'three';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 
-// HDRI files list
+// HDRI files list with proper names
 const hdriFiles = [
-  'cayley_interior_2k.hdr',
-  'comfy_cafe_2k.hdr',
-  'decor_shop_2k.hdr',
-  'glasshouse_interior_2k.hdr',
-  'kiara_interior_2k.hdr',
-  'living_room_2k.hdr'
+  { file: 'living_room_2k.hdr', name: 'Living Room' },
+  { file: 'Balcony.hdr', name: 'Balcony' },
+  { file: 'Bedroom.hdr', name: 'Bedroom' },
+  { file: 'Kitchen.hdr', name: 'Kitchen' }
 ];
 
 // Scene setup
@@ -29,8 +27,13 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setClearColor(0x000000);
 
-// Camera position
-camera.position.z = 0.1;
+// Enhanced tone mapping for better HDR visuals
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+// Camera position - moved further back for better view
+camera.position.z = 3;
 
 // DOM elements
 const loaderOverlay = document.getElementById('loader-overlay');
@@ -54,22 +57,22 @@ let zoomSpeed = 1; // Slower zoom speed
 
 // Sphere for HDRI display
 let sphere = null;
-let currentHdri = hdriFiles[5]; // default to first available HDRI
+let currentHdri = hdriFiles[0].file; // default to first available HDRI
 
 // Initialize HDRI grid
 function initializeHdriGrid() {
   hdriGrid.innerHTML = '';
-  hdriFiles.forEach(file => {
+  hdriFiles.forEach(hdri => {
     const btn = document.createElement('button');
     btn.className = 'hdri-option';
     btn.type = 'button';
-    btn.dataset.hdri = file;
-    if (file === currentHdri) btn.classList.add('active');
-    btn.textContent = file.replace('_2k.hdr', '').replace(/_/g, ' ');
+    btn.dataset.hdri = hdri.file;
+    if (hdri.file === currentHdri) btn.classList.add('active');
+    btn.textContent = hdri.name;
     btn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      loadHdri(file);
+      loadHdri(hdri.file);
     });
     hdriGrid.appendChild(btn);
   });
@@ -159,21 +162,26 @@ function loadHdri(fileName) {
         sphere.material.dispose();
       }
 
-      // Create sphere with HDRI texture
-      const geometry = new THREE.SphereGeometry(500, 64, 32);
+      // Create sphere with HDRI texture - enhanced version
+      const geometry = new THREE.SphereGeometry(100, 128, 64); // Reduced size for better viewing distance
       
-      // Apply texture directly (HDRLoader returns already processed texture)
+      // Apply texture with equirectangular mapping
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      
       const material = new THREE.MeshBasicMaterial({
         map: texture,
-        side: THREE.BackSide
+        side: THREE.BackSide,
+        toneMapped: false,
+        encoding: THREE.sRGBEncoding
       });
 
       sphere = new THREE.Mesh(geometry, material);
       sphere.rotation.order = 'YXZ';
       scene.add(sphere);
 
-      // Update display
-      currentHdriDisplay.textContent = fileName.replace('_2k.hdr', '').toUpperCase();
+      // Update display - use proper name from hdriFiles array
+      const hdriData = hdriFiles.find(hdri => hdri.file === fileName);
+      currentHdriDisplay.textContent = hdriData ? hdriData.name.toUpperCase() : fileName.toUpperCase();
 
       // Hide loader after a short delay
       setTimeout(() => {
@@ -197,29 +205,23 @@ function loadHdri(fileName) {
   );
 }
 
-// Mouse events
-document.addEventListener('mousedown', (e) => {
-  // Exclude clicks on UI elements
-  if (e.target.closest('#hdri-selector') || 
-      e.target.closest('#back-btn') || 
-      e.target.closest('#info-display') ||
-      e.target.closest('.hdri-option')) {
-    return;
-  }
+// Mouse events - attach to canvas for better control
+const canvas = document.getElementById('threejs-canvas');
+
+canvas.addEventListener('mousedown', (e) => {
   isMouseDown = true;
   lastMouseX = e.clientX;
   lastMouseY = e.clientY;
 });
 
-document.addEventListener('mousemove', (e) => {
+canvas.addEventListener('mousemove', (e) => {
   mouseX = e.clientX;
   mouseY = e.clientY;
 
   if (isMouseDown && sphere) {
     const deltaX = e.clientX - lastMouseX;
-    const deltaY = e.clientY - lastMouseY;
 
-    // Only apply Y-axis rotation (left/right rotation) - lock X-axis
+    // Only horizontal rotation (left/right)
     sphere.rotation.y += deltaX * 0.005;
 
     lastMouseX = e.clientX;
@@ -232,29 +234,25 @@ document.addEventListener('mouseup', () => {
 });
 
 // Touch events for mobile
-document.addEventListener('touchstart', (e) => {
-  if (e.target.closest('#hdri-selector') || e.target.closest('#back-btn')) {
-    return;
-  }
+canvas.addEventListener('touchstart', (e) => {
   isMouseDown = true;
   lastMouseX = e.touches[0].clientX;
   lastMouseY = e.touches[0].clientY;
 });
 
-document.addEventListener('touchmove', (e) => {
+canvas.addEventListener('touchmove', (e) => {
   if (isMouseDown && sphere) {
     const deltaX = e.touches[0].clientX - lastMouseX;
-    const deltaY = e.touches[0].clientY - lastMouseY;
 
-    // Only apply Y-axis rotation (left/right rotation) - lock X-axis
+    // Only horizontal rotation (left/right)
     sphere.rotation.y += deltaX * 0.005;
 
     lastMouseX = e.touches[0].clientX;
     lastMouseY = e.touches[0].clientY;
   }
-});
+}, { passive: true });
 
-document.addEventListener('touchend', () => {
+canvas.addEventListener('touchend', () => {
   isMouseDown = false;
 });
 
@@ -294,3 +292,35 @@ initializeHdriGrid();
 resetZoom(); // Initialize zoom display
 loadHdri(currentHdri);
 animate();
+
+// Bottom Arrow and HDRI Selector visibility
+const bottomArrow = document.getElementById('bottom-arrow');
+const hdriSelector = document.getElementById('hdri-selector');
+
+let selectorHideTimeout = null;
+
+// Show selector on arrow hover
+bottomArrow.addEventListener('mouseenter', () => {
+  hdriSelector.classList.add('visible');
+  clearTimeout(selectorHideTimeout);
+});
+
+// Show selector when hovering over the selector itself
+hdriSelector.addEventListener('mouseenter', () => {
+  clearTimeout(selectorHideTimeout);
+});
+
+// Auto-hide selector when leaving both arrow and selector
+hdriSelector.addEventListener('mouseleave', () => {
+  selectorHideTimeout = setTimeout(() => {
+    hdriSelector.classList.remove('visible');
+  }, 2000); // 2 second delay before auto-hide
+});
+
+bottomArrow.addEventListener('mouseleave', () => {
+  if (!hdriSelector.matches(':hover')) {
+    selectorHideTimeout = setTimeout(() => {
+      hdriSelector.classList.remove('visible');
+    }, 2000); // 2 second delay before auto-hide
+  }
+});
